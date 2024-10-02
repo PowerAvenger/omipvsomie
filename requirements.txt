@@ -4,3 +4,4 @@ plotly.express
 streamlit
 datetime
 selenium
+openpyxl
