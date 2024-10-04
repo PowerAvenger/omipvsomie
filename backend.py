@@ -254,21 +254,26 @@ def obtener_clasificacion_porc():
     ruta_superporra='SUPERPORRA2024.xlsm'
 
     #cogemos la tabla acum_porc y las columnas A a M. CUIDADO CON ESTO A VER SI NOS QUEDAMOS CORTOS.
-    df_porra_desvios_porc=pd.read_excel(ruta_superporra,sheet_name='acum_porc',usecols='A:M')
+    df_porra_desvios_porc=pd.read_excel(ruta_superporra,sheet_name='acum_porc',usecols='A:N')
 
-    #pasamos a minusculas los meses
-    #
     #contamos los meses que llevamos jugando
-    meses_porra=sum('2024' in col for col in df_porra_desvios_porc.columns)
+    num_meses_porra=sum('24' in col for col in df_porra_desvios_porc.columns)
+
+    #pasamos a numericos los datos de 'contar', para poder filtrar las que nos interesan
+    df_porra_desvios_porc['contar'] = df_porra_desvios_porc['contar'].apply(pd.to_numeric, errors='coerce')
     #eliminamos aquellos participantes que llevan meses porra menos 2
-    df_porra_desvios_porc=df_porra_desvios_porc[df_porra_desvios_porc['contar']>=meses_porra-2]
+    df_porra_desvios_porc=df_porra_desvios_porc[df_porra_desvios_porc['contar']>=num_meses_porra-2]
     #eliminamos espacios en los nombres de las columnas (por si acaso)
     df_porra_desvios_porc.columns = df_porra_desvios_porc.columns.str.strip()
-    #dejamos solo nombre y meses. podríamos hacerlo eliminando las dos últimas
-    columns_to_filter = [col for col in df_porra_desvios_porc.columns if '2024' in col]
-    df_porra_desvios_porc=df_porra_desvios_porc.loc[:,['Nombre']+columns_to_filter]
+
+    #creamos una lista con los nombres de las columnas de los meses del excel acum porc
+    li_meses_porra = [col for col in df_porra_desvios_porc.columns if '24' in col]
+    #obtenemos el último mes
+    ultimo_mes_porra=li_meses_porra[-1]
+
+    df_porra_desvios_porc=df_porra_desvios_porc.loc[:,['Nombre']+li_meses_porra]
     #convertimos los valores de los desvíos% de todos los meses en numericos
-    df_porra_desvios_porc[columns_to_filter] = df_porra_desvios_porc[columns_to_filter].apply(pd.to_numeric, errors='coerce')
+    df_porra_desvios_porc[li_meses_porra] = df_porra_desvios_porc[li_meses_porra].apply(pd.to_numeric, errors='coerce')
 
     def eliminar_valores_mas_altos(row):
         # Filtrar solo los valores válidos (no NaN)
@@ -276,9 +281,9 @@ def obtener_clasificacion_porc():
         num_validos = len(valores_validos)
         
         # Definir cuántos valores eliminar
-        if num_validos > meses_porra-2:
+        if num_validos > num_meses_porra-2:
             # Calcular cuántos valores eliminar para dejar n-2
-            eliminar_count = num_validos - (meses_porra-2)
+            eliminar_count = num_validos - (num_meses_porra-2)
             
             # Obtener los valores más altos a eliminar
             top_n = valores_validos.nlargest(eliminar_count)
@@ -289,16 +294,21 @@ def obtener_clasificacion_porc():
             # Si hay 7 o menos válidos, no eliminamos nada
             return row
 
-    # Paso 3: Aplicar la función a las columnas filtradas
-    df_porra_desvios_porc[columns_to_filter] = df_porra_desvios_porc[columns_to_filter].apply(eliminar_valores_mas_altos, axis=1)
+    #eliminamos los valores más altos de cada participante
+    df_porra_desvios_porc[li_meses_porra] = df_porra_desvios_porc[li_meses_porra].apply(eliminar_valores_mas_altos, axis=1)
 
     #añadimos columna con la suma y la media de los mejores resultados
     df_porra_desvios_porc['Suma'] = df_porra_desvios_porc.iloc[:, 1:].sum(axis=1, skipna=True)
     df_porra_desvios_porc['Media'] = df_porra_desvios_porc.iloc[:, 1:-1].mean(axis=1, skipna=True)
+    #pasamos a numericos los valores de suma y media
     df_porra_desvios_porc[['Suma','Media']] = df_porra_desvios_porc[['Suma','Media']].apply(pd.to_numeric, errors='coerce')
+    df_porra_desvios_porc=df_porra_desvios_porc.sort_values(by = 'Media')
+    
+    #generamos una lista de participantes
     lista_starpowers=df_porra_desvios_porc['Nombre'].unique().tolist()
+    num_starpowers=len(lista_starpowers)
 
-    return df_porra_desvios_porc, lista_starpowers
+    return df_porra_desvios_porc, lista_starpowers, num_starpowers,ultimo_mes_porra
 
 
 # %%
@@ -337,24 +347,30 @@ def grafico_clasificacion(df_porra_desvios_porc):
     return graf_clasificacion
 
 # %%
-def obtener_comparativa(nombre_seleccionado, df_porra_desvios_porc, df_omie_omip,meses_porra,entrega):
+def obtener_comparativa(nombre_seleccionado, df_porra_desvios_porc, df_omie_omip,num_meses_porra,entrega):
+    
     #mini df con una fila que el nombre seleccionado
     df_nombre_seleccionado=df_porra_desvios_porc[df_porra_desvios_porc['Nombre']==nombre_seleccionado]
+
     #estos son los valores de los desvíos de OMIP frente a OMIE, por meses y en lista
     li_desvios_porc_omip = df_omie_omip['dif%_abs'].dropna().to_list()
     #print(li_desvios_porc_omip)
-    li_desvios_porc_omip=li_desvios_porc_omip[:meses_porra]
+    li_desvios_porc_omip=li_desvios_porc_omip[:num_meses_porra]
+    
     #esta fila se añade al nombre seleccionado
     li_desvios_porc_omip = ['omip'] + li_desvios_porc_omip +['']+['']
-
+    #convertimos a dataframe
     df_desvios_porc_omip = pd.DataFrame([li_desvios_porc_omip], columns=df_nombre_seleccionado.columns)
     df_comp_nombre_omip=pd.concat([df_nombre_seleccionado,df_desvios_porc_omip], ignore_index=True)
     #localizamos las columnas del nombre con NaN
     columns_with_nan = df_comp_nombre_omip.iloc[0].isna()
-    #Convertimos a NaN los valores de las columnas NaN del nombre
+    #Convertimos a NaN los valores de las columnas None del nombre
+    print(df_comp_nombre_omip)
     df_comp_nombre_omip.loc[1, columns_with_nan] = np.nan
-    df_comp_nombre_omip.loc[df_comp_nombre_omip['Nombre']=='omip','Suma'] = df_comp_nombre_omip.iloc[1, 1:meses_porra+1].sum(skipna=True)
-    df_comp_nombre_omip.loc[df_comp_nombre_omip['Nombre']=='omip','Media'] = df_comp_nombre_omip.iloc[1, 1:meses_porra+1].mean(skipna=True)
+    print(df_comp_nombre_omip)
+    df_comp_nombre_omip.iloc[:, 1:num_meses_porra] = df_comp_nombre_omip.iloc[:, 1:num_meses_porra].apply(pd.to_numeric, errors='coerce')
+    df_comp_nombre_omip.loc[df_comp_nombre_omip['Nombre']=='omip','Suma'] = df_comp_nombre_omip.iloc[1, 1:num_meses_porra].sum(skipna=True)
+    df_comp_nombre_omip.loc[df_comp_nombre_omip['Nombre']=='omip','Media'] = df_comp_nombre_omip.iloc[1, 1:num_meses_porra].mean(skipna=True)
     df_comp_nombre_omip[['Suma','Media']] = df_comp_nombre_omip[['Suma','Media']].apply(pd.to_numeric, errors='coerce')
 
     def calcular_suma_media(df, mes_inicio, mes_fin):
@@ -367,13 +383,15 @@ def obtener_comparativa(nombre_seleccionado, df_porra_desvios_porc, df_omie_omip
         df = df[columnas_a_conservar]
         return df, columnas_meses
 
-    mes_inicio = 'Ene 2024'
+    mes_inicio = 'ene-24'
     #entrega = 'Ago 2024'  
-    mes_fin = entrega.capitalize()
+    #mes_fin = entrega.capitalize()
 
     
-    df_comp_nombre_omip_din,columnas_meses = calcular_suma_media(df_comp_nombre_omip, mes_inicio, mes_fin)
+    df_comp_nombre_omip_din,columnas_meses = calcular_suma_media(df_comp_nombre_omip, mes_inicio, entrega)
 
+    #obtenemos df para graficar en barras las comparativas mensuales, suma y media de los desvios en %
+    #del jugador vs omip
     df_comp_nombre_omip_melted=df_comp_nombre_omip_din.melt(id_vars=['Nombre'],
                                           var_name='Mes',
                                           value_name='Valor')
@@ -383,9 +401,10 @@ def obtener_comparativa(nombre_seleccionado, df_porra_desvios_porc, df_omie_omip
     df_comp_nombre_omip_melted['media_texto'] = df_comp_nombre_omip_melted['Valor'].apply(
         lambda x: str(x) if not np.isnan(x) else None
     )
-
-
-    return df_comp_nombre_omip_melted
+    media_jugador=df_comp_nombre_omip_melted.iloc[-2,-2]
+    media_omip=df_comp_nombre_omip_melted.iloc[-1,-2]
+    df_comp_nombre_omip_melted = df_comp_nombre_omip_melted.drop(df_comp_nombre_omip_melted.index[-4:-2])
+    return df_comp_nombre_omip_melted, media_jugador, media_omip
 
 
 # %%
@@ -406,7 +425,7 @@ def grafico_comparativo(df_comp_nombre_omip_melted, nombre_seleccionado):
         legend={'title':''},
         font=dict(color='white'),
         title=dict(
-            text=f'Comparativa de {nombre_seleccionado} contra OMIP',
+            text=f'Comparativa de {nombre_seleccionado} contra OMIP. Valores en %',
             x=.5,
             xanchor='center',
             )
