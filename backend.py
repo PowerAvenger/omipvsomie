@@ -333,16 +333,18 @@ def grafico_clasificacion(df_porra_desvios_porc):
 
     graf_clasificacion.update_yaxes(
         autorange="reversed",
-        title='')
+        title='',
+        tickfont=dict(size=16)
+        )
 
     graf_clasificacion.update_traces(
         width=.7,
         texttemplate='%{x:.3f}', textposition='inside'
     )
 
-    graf_clasificacion.update_yaxes(
-        tickfont=dict(size=16)
-    )
+    #graf_clasificacion.update_yaxes(
+    #    tickfont=dict(size=16)
+    #)
 
     return graf_clasificacion
 
@@ -454,3 +456,90 @@ def grafico_comparativo(df_comp_nombre_omip_melted, nombre_seleccionado):
     return graf_comp
 
 
+def porra_evolution(df_porra_desvios_porc, nombre_seleccionado):
+    # Convertir el dataframe de formato ancho a formato largo (necesario para el gráfico)
+    df_melted = df_porra_desvios_porc.melt(id_vars='Nombre', var_name='Mes', value_name='Valor')
+    # Crear un diccionario de meses para ordenarlos correctamente
+    meses_ordenados = {
+        'ene-24': 1, 'feb-24': 2, 'mar-24': 3, 'abr-24': 4, 'may-24': 5,
+        'jun-24': 6, 'jul-24': 7, 'ago-24': 8, 'sep-24': 9, 'oct-24': 10
+        }
+    # Añadir columna para el orden de los meses
+    df_melted['Mes_ordenado'] = df_melted['Mes'].map(meses_ordenados)
+
+    #df_melted=df_melted.dropna()
+    
+    # Ordenar por Nombre y Mes para calcular la media acumulada
+    df_melted = df_melted.sort_values(by=['Nombre', 'Mes_ordenado'])
+    #eliminamos las filas suma y media. solo nos interesan los meses
+    df_melted=df_melted[~df_melted['Mes'].isin(['Suma','Media'])]
+    df_melted=df_melted.copy()
+
+    #meses_completos = ['ene-24', 'feb-24', 'mar-24', 'abr-24', 'may-24', 'jun-24', 'jul-24', 'ago-24', 'sep-24', 'oct-24']
+    df_melted['Media Acumulada'] = df_melted.groupby('Nombre')['Valor'].expanding().mean().reset_index(level=0,drop=True)
+    df_melted=df_melted.sort_values(by='Mes_ordenado')
+    
+
+    # Crear un DataFrame para la animación
+    df_animado = pd.DataFrame()
+
+    # Agrupar por mes
+    for mes in meses_ordenados:
+        df_mes = df_melted[df_melted['Mes'] == mes].copy()
+        # Ordenar por Media Acumulada
+        df_mes = df_mes.sort_values(by='Media Acumulada')
+        # Añadir una columna que represente el orden en ese mes
+        df_mes['Orden'] = range(len(df_mes))
+        
+        # Agregar un mes a la animación
+        df_animado = pd.concat([df_animado, df_mes], ignore_index=True)
+
+    df_animado['color']=df_animado['Nombre'].apply(lambda x: 'red' if x==nombre_seleccionado else '')
+
+    return df_animado
+
+def animar_porra(df_animado):
+    # Crear la animación del gráfico de barras horizontal
+    fig2 = px.bar(df_animado,
+                x='Media Acumulada',
+                y='Nombre',
+                #color='Nombre',
+                #color='Media Acumulada',
+                color='color',
+                animation_frame='Mes',
+                #range_x=[0, df_animado['Media Acumulada'].max()],
+                orientation='h',
+                #title='Evolución de la Media Acumulada de Jugadores por Mes',
+                labels={'Nombre': 'Jugador', 'Media Acumulada': 'Media Acumulada'},
+                height=800,
+                color_continuous_scale=px.colors.sequential.Electric_r,
+                color_discrete_map={'red':'red'}
+    )
+    # Ajustar el orden del eje Y por cada mes en el gráfico
+    fig2.update_yaxes(categoryorder='total descending', title='Jugador')
+    fig2.update_layout(yaxis_title='Jugador', 
+                    xaxis_title='Media Acumulada', 
+                    barmode='stack',
+                    xaxis=dict(tickmode='linear', tickvals=list(range(0, int(df_animado['Media Acumulada'].max()) + 1))))
+    
+    
+
+
+    fig2.update_layout(
+        showlegend=False,
+        margin=dict(l=250),
+        bargap=.5
+        
+    )
+
+    fig2.update_yaxes(
+        #autorange="reversed",
+        title='',
+        tickfont=dict(size=16)
+        )
+
+    fig2.update_traces(
+        width=.7,
+        texttemplate='%{x:.3f}', textposition='inside'
+    )
+    return fig2

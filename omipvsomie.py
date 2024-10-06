@@ -18,11 +18,25 @@ st.write("Visita mi mini-web de [PowerAPPs](%s) con un montón de utilidades." %
 url_linkedin = "https://www.linkedin.com/posts/jfvidalsierra_powerapps-activity-7216715360010461184-YhHj?utm_source=share&utm_medium=member_desktop"
 st.write("Deja tus comentarios y propuestas en mi perfil de [Linkedin](%s)." % url_linkedin)
 
-from backend import obtener_meff_mensual, obtener_datos_mes_entrega, omie_diario, grafico_omie_omip, obtener_clasificacion_porc, grafico_clasificacion, obtener_comparativa, grafico_comparativo,obtener_datos_mes_anterior
+from backend import obtener_meff_mensual, obtener_datos_mes_entrega, omie_diario, grafico_omie_omip, obtener_clasificacion_porc, grafico_clasificacion, obtener_comparativa, grafico_comparativo,obtener_datos_mes_anterior, animar_porra, porra_evolution
 
 hoy=datetime.datetime.now().date()
 mes_hoy=hoy.month
 
+def autoplay_audio(file_path: str):
+                
+    with open(file_path, "rb") as f:
+        data = f.read()
+        b64 = base64.b64encode(data).decode()
+        md = f"""
+            <audio autoplay="true">
+            <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+            </audio>
+            """
+        st.markdown(
+            md,
+            unsafe_allow_html=True,
+        )
 
 
 #obtenemos la lista de meses 2024 en formato 'sep-24' y la lista de meses en formato ene : 1
@@ -45,6 +59,7 @@ with col1:
     #obtenemos los datos resumen de omip omie y otros df y graf
     graf_futuros, omie_entrega, omip_entrega, df_FTB_mensual_entrega=obtener_datos_mes_entrega(df_FTB_mensual, mes_entrega_seleccion, entrega_seleccion)
     df_omie_diario_entrega_rango=omie_diario(entrega_seleccion, omip_entrega)
+    
     #fecha_ultimo_registro=ultimo_registro.strftime("%d.%m.%Y")
     #hora_ultimo_registro=ultimo_registro.strftime("%H:%M")
     col101,col102,col103=st.columns(3)
@@ -75,32 +90,23 @@ with col20:
     lista_starpowers_ordenada.insert(0,'')
 
     nombre_seleccionado=st.selectbox('Búscate',options=lista_starpowers_ordenada)
+
     df_comp_nombre_omip_melted, media_jugador, media_omip = obtener_comparativa(nombre_seleccionado, df_porra_desvios_porc, df_omie_omip,num_starpowers,ultimo_mes_porra)
     if nombre_seleccionado!='':
-        #df_comp_nombre_omip_melted, media_jugador, media_omip = obtener_comparativa(nombre_seleccionado, df_porra_desvios_porc, df_omie_omip,num_starpowers,ultimo_mes_porra)
-        dif_jugador_omip=round(media_jugador-media_omip,1)
-        #dif_jugador_omip
-        if dif_jugador_omip<0: #gana jugador
-
-            def autoplay_audio(file_path: str):
-                st.balloons()
-                with open(file_path, "rb") as f:
-                    data = f.read()
-                    b64 = base64.b64encode(data).decode()
-                    md = f"""
-                        <audio autoplay="true">
-                        <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
-                        </audio>
-                        """
-                    st.markdown(
-                        md,
-                        unsafe_allow_html=True,
-                    )
-
-            autoplay_audio("Niños.mp3")
-           
-            st.balloons()
         
+        dif_jugador_omip=round(media_jugador-media_omip,1)
+        
+        if dif_jugador_omip < 0: #gana jugador
+
+            if 'nombre_seleccionado_anterior' not in st.session_state:
+                st.session_state.nombre_seleccionado_anterior=None
+            if st.session_state.nombre_seleccionado_anterior !=nombre_seleccionado:
+                #st.balloons()
+                autoplay_audio("Niños.mp3")
+                st.balloons()
+
+                st.session_state.nombre_seleccionado_anterior= nombre_seleccionado
+
         col201,col202,col203=st.columns(3)
         with col201:
             st.metric('Media OMIP', value=f'{media_omip}%')
@@ -120,11 +126,18 @@ with col21:
 
 col10,col11=st.columns([.2,.8])
 with col10:
-    st.subheader("Clasificación #superporraomie2024",divider='rainbow')
-    st.info('Pues aquí tenemos a los aspirantes a #MVPStarPower2024, ordenados de menor a mayor desvío medio en porcentaje y tras eliminar los dos peores resultados de cada participantes.',icon="ℹ️")
+    st.subheader("3. Clasificación #superporraomie2024",divider='rainbow')
+    st.info('Pues aquí tenemos a los aspirantes a #MVPStarPower2024, ordenados de menor a mayor desvío medio en porcentaje y tras eliminar los dos peores resultados de cada participantes. ¡Hasta puedes ver tu evolución si en el paso anterior te has seleccionado!',icon="ℹ️")
     st.metric('Num. StarPowers', num_starpowers)
+    on = st.toggle('Superporra Evolution')
 with col11:
     
-    graf_clasificacion=grafico_clasificacion(df_porra_desvios_porc)
-    st.write(graf_clasificacion)
-    #st.write(df_porra_desvios_porc)
+    if on:
+        df_animado=porra_evolution(df_porra_desvios_porc,nombre_seleccionado)
+        balloons=False
+        fig2=animar_porra(df_animado)
+        st.write(fig2)    
+    else:
+        graf_clasificacion=grafico_clasificacion(df_porra_desvios_porc)
+        st.write(graf_clasificacion)
+    
