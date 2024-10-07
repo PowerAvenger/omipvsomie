@@ -126,7 +126,7 @@ def obtener_datos_mes_entrega(df_FTB_mensual,mes_entrega,entrega):
     return graf_futuros, omie_entrega, omip_entrega, df_FTB_mensual_entrega
 
 # %%
-def omie_diario(entrega,omip_entrega):
+def omie_diario(df_omie_diario, entrega, omip_entrega):
     df_omie_diario_entrega=df_omie_diario[df_omie_diario['Entrega']==entrega]
     #omie_entrega=round(df_omie_diario_entrega['omie'].mean(),2)
     fecha_ini_entrega=df_omie_diario_entrega['datetime'].min()

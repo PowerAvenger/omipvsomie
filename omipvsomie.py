@@ -18,7 +18,7 @@ st.write("Visita mi mini-web de [PowerAPPs](%s) con un montón de utilidades." %
 url_linkedin = "https://www.linkedin.com/posts/jfvidalsierra_powerapps-activity-7216715360010461184-YhHj?utm_source=share&utm_medium=member_desktop"
 st.write("Deja tus comentarios y propuestas en mi perfil de [Linkedin](%s)." % url_linkedin)
 
-from backend import obtener_meff_mensual, obtener_datos_mes_entrega, omie_diario, grafico_omie_omip, obtener_clasificacion_porc, grafico_clasificacion, obtener_comparativa, grafico_comparativo,obtener_datos_mes_anterior, animar_porra, porra_evolution
+from backend import obtener_omie, obtener_meff_mensual, obtener_datos_mes_entrega, omie_diario, grafico_omie_omip, obtener_clasificacion_porc, grafico_clasificacion, obtener_comparativa, grafico_comparativo,obtener_datos_mes_anterior, animar_porra, porra_evolution
 
 hoy=datetime.datetime.now().date()
 mes_hoy=hoy.month
@@ -41,6 +41,7 @@ def autoplay_audio(file_path: str):
 
 #obtenemos la lista de meses 2024 en formato 'sep-24' y la lista de meses en formato ene : 1
 df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual()
+df_omie_mensual,df_omie_diario=obtener_omie()
 
 
 ##DEFINIMOS PRIMER GRUPO DE COLUMNAS PARA LOS 2 GRÁFICOS INICIALES
@@ -58,7 +59,7 @@ with col1:
 
     #obtenemos los datos resumen de omip omie y otros df y graf
     graf_futuros, omie_entrega, omip_entrega, df_FTB_mensual_entrega=obtener_datos_mes_entrega(df_FTB_mensual, mes_entrega_seleccion, entrega_seleccion)
-    df_omie_diario_entrega_rango=omie_diario(entrega_seleccion, omip_entrega)
+    df_omie_diario_entrega_rango=omie_diario(df_omie_diario,entrega_seleccion, omip_entrega)
     
     #fecha_ultimo_registro=ultimo_registro.strftime("%d.%m.%Y")
     #hora_ultimo_registro=ultimo_registro.strftime("%H:%M")

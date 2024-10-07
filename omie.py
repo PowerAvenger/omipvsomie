@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 
 
-@st.cache_data(ttl=1000)
+@st.cache_data(ttl=120)
 def download_esios_id(id,fecha_ini,fecha_fin,agrupacion):
         
         token = st.secrets['ESIOS_API_KEY']
