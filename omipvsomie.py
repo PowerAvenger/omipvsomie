@@ -59,7 +59,7 @@ with col1:
     #obtenemos los datos resumen de omip omie y otros df y graf
     graf_futuros, omie_entrega, omip_entrega, df_FTB_mensual_entrega=obtener_datos_mes_entrega(df_FTB_mensual, mes_entrega_seleccion, entrega_seleccion)
     df_omie_diario_entrega_rango=omie_diario(entrega_seleccion, omip_entrega)
-    st.write(df_o)
+    
     #fecha_ultimo_registro=ultimo_registro.strftime("%d.%m.%Y")
     #hora_ultimo_registro=ultimo_registro.strftime("%H:%M")
     col101,col102,col103=st.columns(3)

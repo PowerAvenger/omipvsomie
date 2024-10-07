@@ -367,9 +367,9 @@ def obtener_comparativa(nombre_seleccionado, df_porra_desvios_porc, df_omie_omip
     #localizamos las columnas del nombre con NaN
     columns_with_nan = df_comp_nombre_omip.iloc[0].isna()
     #Convertimos a NaN los valores de las columnas None del nombre
-    print(df_comp_nombre_omip)
+    #print(df_comp_nombre_omip)
     df_comp_nombre_omip.loc[1, columns_with_nan] = np.nan
-    print(df_comp_nombre_omip)
+    #print(df_comp_nombre_omip)
     df_comp_nombre_omip.iloc[:, 1:num_meses_porra] = df_comp_nombre_omip.iloc[:, 1:num_meses_porra].apply(pd.to_numeric, errors='coerce')
     df_comp_nombre_omip.loc[df_comp_nombre_omip['Nombre']=='omip','Suma'] = df_comp_nombre_omip.iloc[1, 1:num_meses_porra].sum(skipna=True)
     df_comp_nombre_omip.loc[df_comp_nombre_omip['Nombre']=='omip','Media'] = df_comp_nombre_omip.iloc[1, 1:num_meses_porra].mean(skipna=True)
