@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 import numpy as np
 
 
-from omie import obtener_omie_mensual,obtener_omie_diario
+from omie import obtener_omie_mensual, obtener_omie_diario
 from meff import obtener_FTB
 
 
