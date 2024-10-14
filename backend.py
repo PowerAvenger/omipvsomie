@@ -61,31 +61,37 @@ def obtener_datos_mes_entrega(df_FTB_mensual,mes_entrega,entrega):
     ## ESTE DATAFRAME LO USAMOS PARA OBTENER UNA GRÁFICA DE OMIP PARA EL MES DE ENTREGA (MINIPORRA) DESDE 6 MESES ATRÁS
 
     #filtramos por el mes de entrega (miniporra) y por mes fecha (para evitar futuros dentro del mismo mes)
-    df_FTB_mensual_entrega=df_FTB_mensual[(df_FTB_mensual['Mes_Entrega']==mes_entrega) & (df_FTB_mensual['Mes_Fecha']!=df_FTB_mensual['Mes_Entrega'])]
+    df_FTB_mensual_entrega_menos1=df_FTB_mensual[(df_FTB_mensual['Mes_Entrega']==mes_entrega) & (df_FTB_mensual['Mes_Fecha']!=df_FTB_mensual['Mes_Entrega'])]
+    df_FTB_mensual_entrega=df_FTB_mensual[df_FTB_mensual['Mes_Entrega']==mes_entrega] # & (df_FTB_mensual['Mes_Fecha']!=df_FTB_mensual['Mes_Entrega'])]
     
     #se usa simplemente para determinar la escala y del gráfico de area para los 3 ultimos valores
     max_precio_entrega=df_FTB_mensual_entrega['Precio'].max()
 
-    #dataframe con los 3 valores últimos para resaltarlos. USADOS PARA EL AREA DE LOS TRES ULTIMOS VALORES
+    #dataframe con los 3 valores últimos para resaltarlos. USADOS PARA EL AREA DE LOS TRES ULTIMOS VALORES INCLUIDO EL MES DE ENTREGA
     df_FTB_mensual_entrega_last3=df_FTB_mensual_entrega.tail(3)
+    #dataframe con los 3 valores últimos del mes anterior. USADOS PARA EL AREA DE LOS TRES ULTIMOS VALORES
+    df_FTB_mensual_entrega_last3_menos1=df_FTB_mensual_entrega_menos1.tail(3)
     #media de omip
     omip_entrega=round(df_FTB_mensual_entrega_last3['Precio'].mean(),2)
+    omip_entrega_menos1=round(df_FTB_mensual_entrega_last3_menos1['Precio'].mean(),2)
 
     #valor dinamico de omie para el mes de la miniporra (mes de entrega)
     df_omie_entrega=df_omie_mensual[df_omie_mensual['Entrega']==entrega]['omie']
     omie_entrega=df_omie_entrega.iloc[0]
 
-
+    #PRIMER GRÁFICO DE DATOS. EVOLUCIÓN DE OMIP vs OMIE MEDIO
     graf_futuros=px.line(df_FTB_mensual_entrega, x='Fecha',y='Precio',
-                     labels={'Precio':'€/MWh'},
-                     
-                    )
+        labels={'Precio':'€/MWh'},
+    )
 
     graf_futuros.update_traces(
         line=dict(color='sienna'),
         name='omip',
         showlegend=True
-        
+    )
+
+    graf_futuros.update_xaxes(
+        showgrid=True
     )
 
     graf_futuros.update_layout(
@@ -94,20 +100,32 @@ def obtener_datos_mes_entrega(df_FTB_mensual,mes_entrega,entrega):
             x=.5,
             xanchor='center',
             ),
-        #legend_title_text='omip'
-        
-            
-        
     )
+    
+    #añadimos rectangulo transparente con los tres precios últimos de OMIP
     graf_futuros.add_trace(
         go.Scatter(
             x=df_FTB_mensual_entrega_last3['Fecha'],
-            y=[max_precio_entrega+5]*len(df_FTB_mensual_entrega_last3), #['Precio'],
+            #y=[max_precio_entrega+5]*len(df_FTB_mensual_entrega_last3), 
+            y=[omip_entrega]*len(df_FTB_mensual_entrega_last3), 
             fill='tozeroy',
             mode='none',
             fillcolor='rgba(255, 100, 100, 0.5)',
             name='last 3'
-            #showlegend=False
+            
+        )
+    )
+    #añadimos rectangulo transparente con los tres precios últimos de OMIP
+    graf_futuros.add_trace(
+        go.Scatter(
+            x=df_FTB_mensual_entrega_last3_menos1['Fecha'],
+            #y=[max_precio_entrega+5]*len(df_FTB_mensual_entrega_last3_menos1), 
+            y=[omip_entrega_menos1]*len(df_FTB_mensual_entrega_last3_menos1), 
+            fill='tozeroy',
+            mode='none',
+            fillcolor='rgba(255, 150, 150, 0.2)',
+            name='last 3 INI'
+            
         )
     )
     ##AÑADIMOS VALOR MEDIO DE OMIE PARA EL MES SELECCIONADO
@@ -117,7 +135,7 @@ def obtener_datos_mes_entrega(df_FTB_mensual,mes_entrega,entrega):
             y=[omie_entrega]*len(df_FTB_mensual_entrega), #['Precio'],
             #fill='tozeroy',
             mode='lines',
-            #fillcolor='rgba(255, 100, 100, 0.5)',
+            fillcolor='rgba(255, 150, 150, 0.2)',
             line=dict(dash='dot', color='green'),
             name='omie'
         )
