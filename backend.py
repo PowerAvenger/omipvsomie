@@ -32,7 +32,7 @@ df_omie_mensual,df_omie_diario=obtener_omie()
 # %%
 def obtener_meff_mensual():
     
-        df_FTB = obtener_FTB(web_meff=True)
+        df_FTB = obtener_FTB(web_meff=False)
 
         #filtramos por Periodo 'Mensual'
         df_FTB_mensual=df_FTB[df_FTB['Cod.'].str.startswith('FTBCM')]
