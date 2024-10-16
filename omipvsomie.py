@@ -58,20 +58,38 @@ with col1:
     mes_entrega_seleccion=meses[entrega_seleccion_recortado]
 
     #obtenemos los datos resumen de omip omie y otros df y graf
-    graf_futuros, omie_entrega, omip_entrega, df_FTB_mensual_entrega=obtener_datos_mes_entrega(df_FTB_mensual, mes_entrega_seleccion, entrega_seleccion)
+    graf_futuros, omie_entrega, omip_entrega, omip_entrega_menos1, df_FTB_mensual_entrega=obtener_datos_mes_entrega(df_FTB_mensual, mes_entrega_seleccion, entrega_seleccion)
     df_omie_diario_entrega_rango=omie_diario(df_omie_diario,entrega_seleccion, omip_entrega)
     
-    #fecha_ultimo_registro=ultimo_registro.strftime("%d.%m.%Y")
-    #hora_ultimo_registro=ultimo_registro.strftime("%H:%M")
+    
     col101,col102,col103=st.columns(3)
     with col101:
-        st.metric('OMIP',value=omip_entrega)
+        st.metric('OMIE media',value=omie_entrega)
+        
     with col102:
-        st.metric('OMIE',value=omie_entrega)
+        st.metric('OMIP (mes anterior)',value=omip_entrega_menos1,help='Valor medio de OMIP de los últimos tres dias del mes anterior. Valor estático y usado en las siguientes secciones como referencia.')
+        #st.metric('OMIP (mes en curso)',value=omip_entrega)
     with col103:
+        dif_omipm1_omie=round(omip_entrega_menos1-omie_entrega,2)
+        delta_dif_m1=round((dif_omipm1_omie/omie_entrega)*100,2)
+        st.metric('Diferencia', value=dif_omipm1_omie,delta=f'{delta_dif_m1}%')
+        #dif_omip_omie=round(omip_entrega-omie_entrega,2)
+        #delta_dif=round((dif_omip_omie/omie_entrega)*100,2)
+        #st.metric('Diferencia', value=dif_omip_omie,delta=f'{delta_dif}%')
+    col111,col112,col113=st.columns(3)
+    #with col111:
+    #    st.metric('OMIE media',value=omie_entrega)
+        
+    with col112:
+        #st.metric('OMIP (mes anterior)',value=omip_entrega_menos1)
+        st.metric('OMIP (mes en curso)',value=omip_entrega, help='Valor medio de OMIP de los tres últimos días disponibles durante el mes en curso. Es un valor dinámico.')
+    with col113:
+        #dif_omipm1_omie=round(omip_entrega_menos1-omie_entrega,2)
+        #delta_dif_m1=round((dif_omipm1_omie/omie_entrega)*100,2)
+        #st.metric('Diferencia', value=dif_omipm1_omie,delta=f'{delta_dif_m1}%')
         dif_omip_omie=round(omip_entrega-omie_entrega,2)
         delta_dif=round((dif_omip_omie/omie_entrega)*100,2)
-        st.metric('Diferencia', value=dif_omip_omie,delta=f'{delta_dif}%')   
+        st.metric('Diferencia', value=dif_omip_omie,delta=f'{delta_dif}%')
 with col2:
     st.write (graf_futuros)
 with col3:     

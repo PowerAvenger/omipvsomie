@@ -32,7 +32,7 @@ df_omie_mensual,df_omie_diario=obtener_omie()
 # %%
 def obtener_meff_mensual():
     
-        df_FTB = obtener_FTB(web_meff=False)
+        df_FTB = obtener_FTB(web_meff=True)
 
         #filtramos por Periodo 'Mensual'
         df_FTB_mensual=df_FTB[df_FTB['Cod.'].str.startswith('FTBCM')]
@@ -65,7 +65,7 @@ def obtener_datos_mes_entrega(df_FTB_mensual,mes_entrega,entrega):
     df_FTB_mensual_entrega=df_FTB_mensual[df_FTB_mensual['Mes_Entrega']==mes_entrega] # & (df_FTB_mensual['Mes_Fecha']!=df_FTB_mensual['Mes_Entrega'])]
     
     #se usa simplemente para determinar la escala y del gráfico de area para los 3 ultimos valores
-    max_precio_entrega=df_FTB_mensual_entrega['Precio'].max()
+    #max_precio_entrega=df_FTB_mensual_entrega['Precio'].max()
 
     #dataframe con los 3 valores últimos para resaltarlos. USADOS PARA EL AREA DE LOS TRES ULTIMOS VALORES INCLUIDO EL MES DE ENTREGA
     df_FTB_mensual_entrega_last3=df_FTB_mensual_entrega.tail(3)
@@ -99,35 +99,73 @@ def obtener_datos_mes_entrega(df_FTB_mensual,mes_entrega,entrega):
             text=f'Evolución de OMIP para el mes de {entrega}.',
             x=.5,
             xanchor='center',
-            ),
+        ),
+        xaxis=dict(
+            rangeslider=dict(
+                visible=True,
+                bgcolor='rgba(173, 216, 230, 0.5)'
+            ),  
+            rangeselector=dict(
+                buttons=list([
+                    dict(count=1, label="1m", step="month", stepmode="backward"),
+                    dict(count=6, label="6m", step="month", stepmode="backward"),
+                    dict(step="all")  # Visualizar todos los datos
+                ]),
+                #visible=True
+            )
+        )
     )
     
-    #añadimos rectangulo transparente con los tres precios últimos de OMIP
+    #añadimos rectangulo transparente con los tres precios últimos de OMIP incluido mes de entrega
+    ancho=3
     graf_futuros.add_trace(
         go.Scatter(
             x=df_FTB_mensual_entrega_last3['Fecha'],
-            #y=[max_precio_entrega+5]*len(df_FTB_mensual_entrega_last3), 
-            y=[omip_entrega]*len(df_FTB_mensual_entrega_last3), 
-            fill='tozeroy',
+            y=[omip_entrega+ancho]*len(df_FTB_mensual_entrega_last3),
+            mode='lines', 
+            line=dict(color='rgba(255, 255, 204, 0.0)'),                   
+            showlegend=False
+        )
+    )
+    graf_futuros.add_trace(
+        go.Scatter(
+            x=df_FTB_mensual_entrega_last3['Fecha'],
+            y=[omip_entrega-ancho]*len(df_FTB_mensual_entrega_last3), 
+            fill='tonexty',
             mode='none',
-            fillcolor='rgba(255, 100, 100, 0.5)',
-            name='last 3'
+            fillcolor='rgba(255, 255, 204, 0.2)',
+            name='last 3',
             
         )
     )
+
     #añadimos rectangulo transparente con los tres precios últimos de OMIP
     graf_futuros.add_trace(
         go.Scatter(
             x=df_FTB_mensual_entrega_last3_menos1['Fecha'],
-            #y=[max_precio_entrega+5]*len(df_FTB_mensual_entrega_last3_menos1), 
-            y=[omip_entrega_menos1]*len(df_FTB_mensual_entrega_last3_menos1), 
-            fill='tozeroy',
-            mode='none',
-            fillcolor='rgba(255, 150, 150, 0.2)',
-            name='last 3 INI'
+            y=[omip_entrega_menos1+ancho]*len(df_FTB_mensual_entrega_last3_menos1), 
+            mode='lines',
+            line=dict(color='rgba(255, 150, 150, 0.0)'),
+            showlegend=False
             
         )
     )
+
+    graf_futuros.add_trace(
+        go.Scatter(
+            x=df_FTB_mensual_entrega_last3_menos1['Fecha'],
+            y=[omip_entrega_menos1-ancho]*len(df_FTB_mensual_entrega_last3_menos1), 
+            fill='tonexty',
+            mode='none',
+            fillcolor='rgba(255, 150, 150, 0.2)',
+            name='last3 M-1'
+            
+        )
+    )
+
+
+
+
     ##AÑADIMOS VALOR MEDIO DE OMIE PARA EL MES SELECCIONADO
     graf_futuros.add_trace(
         go.Scatter(
@@ -141,7 +179,7 @@ def obtener_datos_mes_entrega(df_FTB_mensual,mes_entrega,entrega):
         )
     )
         
-    return graf_futuros, omie_entrega, omip_entrega, df_FTB_mensual_entrega
+    return graf_futuros, omie_entrega, omip_entrega, omip_entrega_menos1, df_FTB_mensual_entrega
 
 # %%
 def omie_diario(df_omie_diario, entrega, omip_entrega):
