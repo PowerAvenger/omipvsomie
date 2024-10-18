@@ -129,8 +129,11 @@ def descargar_meff(ruta_app_str,fecha_ini_meff,fecha_fin_meff):
     
 
 
-
+#esta función nos permite obtener un dataframe con los FTB de meff.
+#es la que sea usa en backend para filtrar el mes de entrega por 'mensual'
+#incluye un parámetro (web_meff) para actualizar los datos de la web de meff y añadirlos al histórico
 def obtener_FTB(web_meff):
+    #print(web_meff)
     df_historicos_FTB, ultimo_registro=obtener_historicos()
     if web_meff:
         ruta_app_str,fecha_ini_meff,fecha_fin_meff=obtener_param_meff(ultimo_registro)

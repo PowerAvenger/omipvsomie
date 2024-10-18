@@ -39,32 +39,67 @@ def autoplay_audio(file_path: str):
         )
 
 
+if 'download_meff' not in st.session_state:
+    st.session_state.download_meff=False
+    #obtenemos la lista de meses 2024 en formato 'sep-24' y la lista de meses en formato ene : 1
+    #df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual(st.session_state.download_meff)
+    #df_omie_mensual,df_omie_diario=obtener_omie()
+#if 'password_verified' not in st.session_state:
+#    st.session_state.password_verified = False
+#    st.session_state.download_meff=False
+
 #obtenemos la lista de meses 2024 en formato 'sep-24' y la lista de meses en formato ene : 1
-df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual()
+df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual(st.session_state.download_meff)
 df_omie_mensual,df_omie_diario=obtener_omie()
+
+def actualiza_meff(password):
+    if password=='josepass':
+                
+                st.session_state.download_meff=True
+                df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual(st.session_state.download_meff)
+                st.session_state.download_meff=False
+    return
+
 
 
 ##DEFINIMOS PRIMER GRUPO DE COLUMNAS PARA LOS 2 GRÁFICOS INICIALES
 col1,col2,col3=st.columns([.2,.4,.4])
+#columna pequeña de la izquierda con datos resumen
 with col1:
     st.subheader("1. OMIP vs OMIE.",divider='rainbow')
     st.info('Para el mes seleccionado, vas a visualizar los valores de OMIP de los últimos seis meses. Para calcular su media y compararla con OMIE, sólo tomamos los tres últimos valores.',icon="ℹ️")
     #selector de meses que nos devuelve el mes de entrega en formato 'ene-24'
     lista_options=l_entregas_24[:mes_hoy]
-    entrega_seleccion=st.selectbox('Selecciona el mes a visualizar', options=lista_options,index=mes_hoy-1)
+    col1001,col1002 = st.columns(2)
+    with col1001:
+        entrega_seleccion=st.selectbox('Selecciona el mes a visualizar', options=lista_options,index=mes_hoy-1)
     
+            
+            #if password=='josepass':
+            #    st.session_state.download_meff=True
+            #    df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual(st.session_state.download_meff)
+            #    st.session_state.download_meff=False
+            #    st.success('Descarga autorizada. Actualizando datos...', icon="✅")
+            #        #st.rerun()
+            #elif password:
+            #        st.error('Contraseña incorrecta.',icon="🚫")
+            #else:
+                #st.success('Contraseña ya verificada. Datos actualizados.', icon="✅")
+                
     #obtenemos el número de mes correspondiente
     entrega_seleccion_recortado=entrega_seleccion[:3]
+    
     mes_entrega_seleccion=meses[entrega_seleccion_recortado]
 
     #obtenemos los datos resumen de omip omie y otros df y graf
     graf_futuros, omie_entrega, omip_entrega, omip_entrega_menos1, df_FTB_mensual_entrega=obtener_datos_mes_entrega(df_FTB_mensual, mes_entrega_seleccion, entrega_seleccion)
     df_omie_diario_entrega_rango=omie_diario(df_omie_diario,entrega_seleccion, omip_entrega)
     
-    
+    #primera fila de indicadores
     col101,col102,col103=st.columns(3)
     with col101:
         st.metric('OMIE media',value=omie_entrega)
+        
         
     with col102:
         st.metric('OMIP (mes anterior)',value=omip_entrega_menos1,help='Valor medio de OMIP de los últimos tres dias del mes anterior. Valor estático y usado en las siguientes secciones como referencia.')
@@ -73,12 +108,15 @@ with col1:
         dif_omipm1_omie=round(omip_entrega_menos1-omie_entrega,2)
         delta_dif_m1=round((dif_omipm1_omie/omie_entrega)*100,2)
         st.metric('Diferencia', value=dif_omipm1_omie,delta=f'{delta_dif_m1}%')
-        #dif_omip_omie=round(omip_entrega-omie_entrega,2)
-        #delta_dif=round((dif_omip_omie/omie_entrega)*100,2)
-        #st.metric('Diferencia', value=dif_omip_omie,delta=f'{delta_dif}%')
+
+    #segunda fila de indicadores    
     col111,col112,col113=st.columns(3)
-    #with col111:
-    #    st.metric('OMIE media',value=omie_entrega)
+    with col111:
+        with st.popover('Actualizar OMIP'):
+            st.markdown('⚠️ ¡Sólo autorizados! ⚠️')
+            #if not st.session_state.password_verified:
+            password=st.text_input('Introduce la contraseña',type='password')
+            actualiza_password=st.button('Confirmar',on_click=actualiza_meff(password))
         
     with col112:
         #st.metric('OMIP (mes anterior)',value=omip_entrega_menos1)

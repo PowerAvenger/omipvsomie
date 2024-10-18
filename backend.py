@@ -6,7 +6,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
-
+import streamlit as st
 
 from omie import obtener_omie_mensual, obtener_omie_diario
 from meff import obtener_FTB
@@ -18,6 +18,7 @@ from meff import obtener_FTB
 # ## OBTENEMOS DATOS DE OMIE
 
 # %%
+@st.cache_data()
 def obtener_omie():
     df_omie_mensual=obtener_omie_mensual()
     df_omie_diario=obtener_omie_diario()
@@ -30,9 +31,10 @@ df_omie_mensual,df_omie_diario=obtener_omie()
 # ## dataframe de partida para Periodo = Mensual
 
 # %%
-def obtener_meff_mensual():
+@st.cache_data()
+def obtener_meff_mensual(web_meff):
     
-        df_FTB = obtener_FTB(web_meff=False)
+        df_FTB = obtener_FTB(web_meff)
 
         #filtramos por Periodo 'Mensual'
         df_FTB_mensual=df_FTB[df_FTB['Cod.'].str.startswith('FTBCM')]
@@ -49,10 +51,13 @@ def obtener_meff_mensual():
                                 df_FTB_mensual['Mes_Entrega'] + 12,
                                 df_FTB_mensual['Mes_Entrega'])
 
-        # Filtrar las filas donde 'Entrega' contiene '24'
-        l_entregas_24 = df_FTB_mensual[df_FTB_mensual['Entrega'].str.contains('24', na=False)]['Entrega'].unique().tolist()
+        #lista con todos los meses del historico en formato 'ene-23'
         l_meses_unicos=df_FTB_mensual['Entrega'].unique().tolist()
+        # lista con 'Entrega' contiene '24', es decir, del año 2024         
+        l_entregas_24 = df_FTB_mensual[df_FTB_mensual['Entrega'].str.contains('24', na=False)]['Entrega'].unique().tolist()
         
+        #print(l_entregas_24)
+        #print(l_meses_unicos)
         return df_FTB_mensual, meses, l_entregas_24,l_meses_unicos
 
 
@@ -108,7 +113,7 @@ def obtener_datos_mes_entrega(df_FTB_mensual,mes_entrega,entrega):
             rangeselector=dict(
                 buttons=list([
                     dict(count=1, label="1m", step="month", stepmode="backward"),
-                    dict(count=6, label="6m", step="month", stepmode="backward"),
+                    dict(count=3, label="3m", step="month", stepmode="backward"),
                     dict(step="all")  # Visualizar todos los datos
                 ]),
                 #visible=True
