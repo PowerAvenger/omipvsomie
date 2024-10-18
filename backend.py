@@ -7,6 +7,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import numpy as np
 import streamlit as st
+import locale
 
 from omie import obtener_omie_mensual, obtener_omie_diario
 from meff import obtener_FTB
@@ -40,35 +41,37 @@ def obtener_meff_mensual(web_meff):
         df_FTB_mensual=df_FTB[df_FTB['Cod.'].str.startswith('FTBCM')]
         #hacemos copy del df
         df_FTB_mensual=df_FTB_mensual.copy()
-        #añadimos columna con el mes de la fecha de negociación
-        df_FTB_mensual['Mes_Fecha']=df_FTB_mensual['Fecha'].dt.month
-        #añadimos columna con el mes de la fecha de entrega
-        meses = {'ene': 1, 'feb': 2, 'mar': 3, 'abr': 4, 'may': 5, 'jun': 6, 
-                'jul': 7, 'ago': 8, 'sep': 9, 'oct': 10, 'nov': 11, 'dic': 12}
-        df_FTB_mensual['Mes_Entrega']=df_FTB_mensual['Entrega'].str[:3].map(meses)
-        #modificamos el mes de entrega para poder restar
-        df_FTB_mensual['Mes_Entrega'] = np.where((df_FTB_mensual['Mes_Fecha'] == 12) & (df_FTB_mensual['Mes_Entrega'] <= 12),
-                                df_FTB_mensual['Mes_Entrega'] + 12,
-                                df_FTB_mensual['Mes_Entrega'])
 
-        #lista con todos los meses del historico en formato 'ene-23'
-        l_meses_unicos=df_FTB_mensual['Entrega'].unique().tolist()
-        # lista con 'Entrega' contiene '24', es decir, del año 2024         
-        l_entregas_24 = df_FTB_mensual[df_FTB_mensual['Entrega'].str.contains('24', na=False)]['Entrega'].unique().tolist()
+        #lista con el mes-año tipo ene-24 obtenido de 'Entrega'
+        li_mesaño=df_FTB_mensual['Entrega'].unique().tolist()
+        #creamos un diccionario asociando el primer mes-año de la lista con 1 y así sucesivamente
+        di_mesaño={mes: idx for idx, mes in enumerate(li_mesaño,start=1)}
         
-        #print(l_entregas_24)
-        #print(l_meses_unicos)
-        return df_FTB_mensual, meses, l_entregas_24,l_meses_unicos
+        #creamos columna de número de meses desde el primer mes de entrega hasta el último
+        df_FTB_mensual['Mes_Entrega']=df_FTB_mensual['Entrega'].map(di_mesaño)
+        #esto es para que el nombre del mes corto sea en castellano
+        locale.setlocale(locale.LC_TIME, 'es_ES')  # Para sistemas Windows
+        # Crear una nueva columna 'mes_año' con el formato 'mes-abreviado-año-corto'
+        df_FTB_mensual['Fecha_corta'] = df_FTB_mensual['Fecha'].dt.strftime('%b-%y').str.replace(r'\.', '', regex=True)
+
+        #creamos otra columna tipo mes indexado pero esta vez para el mes año de la fecha de los datos
+        df_FTB_mensual['Mes_Fecha']=df_FTB_mensual['Fecha_corta'].map(di_mesaño)        
+        
+        # lista con 'Entrega' contiene '24', es decir, del año 2024         
+        li_entregas_24 = df_FTB_mensual[df_FTB_mensual['Entrega'].str.contains('24', na=False)]['Entrega'].unique().tolist()
+        
+        return df_FTB_mensual, di_mesaño, li_entregas_24, li_mesaño
 
 
 # %%
 def obtener_datos_mes_entrega(df_FTB_mensual,mes_entrega,entrega):
     ## ESTE DATAFRAME LO USAMOS PARA OBTENER UNA GRÁFICA DE OMIP PARA EL MES DE ENTREGA (MINIPORRA) DESDE 6 MESES ATRÁS
-
+    print (mes_entrega)
     #filtramos por el mes de entrega (miniporra) y por mes fecha (para evitar futuros dentro del mismo mes)
-    df_FTB_mensual_entrega_menos1=df_FTB_mensual[(df_FTB_mensual['Mes_Entrega']==mes_entrega) & (df_FTB_mensual['Mes_Fecha']!=df_FTB_mensual['Mes_Entrega'])]
-    df_FTB_mensual_entrega=df_FTB_mensual[df_FTB_mensual['Mes_Entrega']==mes_entrega] # & (df_FTB_mensual['Mes_Fecha']!=df_FTB_mensual['Mes_Entrega'])]
-    
+    df_FTB_mensual_entrega_menos1=df_FTB_mensual[(df_FTB_mensual['Mes_Entrega']==mes_entrega) & (df_FTB_mensual['Mes_Fecha']<df_FTB_mensual['Mes_Entrega'])]
+    #df_FTB_mensual_entrega_menos1=df_FTB_mensual[(df_FTB_mensual['Mes_Fecha']<df_FTB_mensual['Mes_Entrega'])]
+    df_FTB_mensual_entrega=df_FTB_mensual[(df_FTB_mensual['Mes_Entrega']==mes_entrega) & (df_FTB_mensual['Mes_Fecha']<=df_FTB_mensual['Mes_Entrega'])]
+    #df_FTB_mensual_entrega=df_FTB_mensual[df_FTB_mensual['Mes_Entrega']==mes_entrega] # & (df_FTB_mensual['Mes_Fecha']!=df_FTB_mensual['Mes_Entrega'])]
     #se usa simplemente para determinar la escala y del gráfico de area para los 3 ultimos valores
     #max_precio_entrega=df_FTB_mensual_entrega['Precio'].max()
 

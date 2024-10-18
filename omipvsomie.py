@@ -13,7 +13,7 @@ st.set_page_config(
 )
 st.title('Superporrero: ¿Bates a OMIP?')
 st.caption("Copyright by Jose Vidal :ok_hand:")
-url_apps = "https://powerappspy-josevidal.streamlit.app/"
+url_apps = "https://epowerapps-by-josevidal.streamlit.app/"
 st.write("Visita mi mini-web de [PowerAPPs](%s) con un montón de utilidades." % url_apps)
 url_linkedin = "https://www.linkedin.com/posts/jfvidalsierra_powerapps-activity-7216715360010461184-YhHj?utm_source=share&utm_medium=member_desktop"
 st.write("Deja tus comentarios y propuestas en mi perfil de [Linkedin](%s)." % url_linkedin)
@@ -49,14 +49,17 @@ if 'download_meff' not in st.session_state:
 #    st.session_state.download_meff=False
 
 #obtenemos la lista de meses 2024 en formato 'sep-24' y la lista de meses en formato ene : 1
-df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual(st.session_state.download_meff)
+#df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual(st.session_state.download_meff)
+df_FTB_mensual, di_mesaño, li_entregas_24, li_mesaño=obtener_meff_mensual(st.session_state.download_meff)
 df_omie_mensual,df_omie_diario=obtener_omie()
+
 
 def actualiza_meff(password):
     if password=='josepass':
                 
                 st.session_state.download_meff=True
-                df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual(st.session_state.download_meff)
+                #df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual(st.session_state.download_meff)
+                df_FTB_mensual, di_mesaño, li_entregas_24, li_mesaño=obtener_meff_mensual(st.session_state.download_meff)
                 st.session_state.download_meff=False
     return
 
@@ -69,32 +72,27 @@ with col1:
     st.subheader("1. OMIP vs OMIE.",divider='rainbow')
     st.info('Para el mes seleccionado, vas a visualizar los valores de OMIP de los últimos seis meses. Para calcular su media y compararla con OMIE, sólo tomamos los tres últimos valores.',icon="ℹ️")
     #selector de meses que nos devuelve el mes de entrega en formato 'ene-24'
-    lista_options=l_entregas_24[:mes_hoy]
+    lista_options=li_entregas_24[:mes_hoy]
     col1001,col1002 = st.columns(2)
     with col1001:
+        #seleccion del mes de entrega en formato ago-24
         entrega_seleccion=st.selectbox('Selecciona el mes a visualizar', options=lista_options,index=mes_hoy-1)
     
             
-            #if password=='josepass':
-            #    st.session_state.download_meff=True
-            #    df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual(st.session_state.download_meff)
-            #    st.session_state.download_meff=False
-            #    st.success('Descarga autorizada. Actualizando datos...', icon="✅")
-            #        #st.rerun()
-            #elif password:
-            #        st.error('Contraseña incorrecta.',icon="🚫")
-            #else:
-                #st.success('Contraseña ya verificada. Datos actualizados.', icon="✅")
                 
     #obtenemos el número de mes correspondiente
-    entrega_seleccion_recortado=entrega_seleccion[:3]
+    #entrega_seleccion_recortado=entrega_seleccion[:3]
     
-    mes_entrega_seleccion=meses[entrega_seleccion_recortado]
+    #num_mes_entrega_seleccion=meses[entrega_seleccion_recortado]
+    num_mes_entrega_seleccion=di_mesaño[entrega_seleccion]
+    #print(num_mes_entrega_seleccion)
 
     #obtenemos los datos resumen de omip omie y otros df y graf
-    graf_futuros, omie_entrega, omip_entrega, omip_entrega_menos1, df_FTB_mensual_entrega=obtener_datos_mes_entrega(df_FTB_mensual, mes_entrega_seleccion, entrega_seleccion)
+    #num_mes_entrega_seleccion está en formato número (del mes seleccionado)
+    #entrega_selección está en formato texto 'ago-24'
+    graf_futuros, omie_entrega, omip_entrega, omip_entrega_menos1, df_FTB_mensual_entrega=obtener_datos_mes_entrega(df_FTB_mensual, num_mes_entrega_seleccion, entrega_seleccion)
     df_omie_diario_entrega_rango=omie_diario(df_omie_diario,entrega_seleccion, omip_entrega)
-    
+    #st.write(df_FTB_mensual_entrega)
     #primera fila de indicadores
     col101,col102,col103=st.columns(3)
     with col101:
@@ -197,4 +195,5 @@ with col11:
     else:
         graf_clasificacion=grafico_clasificacion(df_porra_desvios_porc)
         st.write(graf_clasificacion)
-    
+#st.write(df_FTB_mensual)    
+#st.write(df_FTB_mensual_entrega)
