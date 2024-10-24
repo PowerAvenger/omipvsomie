@@ -32,7 +32,7 @@ df_omie_mensual,df_omie_diario=obtener_omie()
 # ## dataframe de partida para Periodo = Mensual
 
 # %%
-@st.cache_data()
+#@st.cache_data()
 def obtener_meff_mensual(web_meff):
     
         df_FTB = obtener_FTB(web_meff)

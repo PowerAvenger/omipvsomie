@@ -51,6 +51,7 @@ if 'download_meff' not in st.session_state:
 #obtenemos la lista de meses 2024 en formato 'sep-24' y la lista de meses en formato ene : 1
 #df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual(st.session_state.download_meff)
 df_FTB_mensual, di_mesaño, li_entregas_24, li_mesaño=obtener_meff_mensual(st.session_state.download_meff)
+#st.write(df_FTB_mensual)
 df_omie_mensual,df_omie_diario=obtener_omie()
 
 
@@ -61,9 +62,8 @@ def actualiza_meff(password):
                 #df_FTB_mensual, meses, l_entregas_24,l_meses_unicos=obtener_meff_mensual(st.session_state.download_meff)
                 df_FTB_mensual, di_mesaño, li_entregas_24, li_mesaño=obtener_meff_mensual(st.session_state.download_meff)
                 st.session_state.download_meff=False
-    return
-
-
+    return 
+    
 
 ##DEFINIMOS PRIMER GRUPO DE COLUMNAS PARA LOS 2 GRÁFICOS INICIALES
 col1,col2,col3=st.columns([.2,.4,.4])
